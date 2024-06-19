@@ -1,0 +1,70 @@
+#MysqlDB subnet group resource.
+resource "aws_docdb_subnet_group" "default" {
+  for_each       = local.subnets
+  name       = "main"
+  subnet_ids = [aws_subnet.private["1a"].id]
+
+  tags = {
+    Name = "My docdb subnet group"
+  }
+}
+
+# create RDS mysql database
+resource "aws_db_instance" "default" {
+  allocated_storage    = 10
+  db_name              = "mydb"
+  engine               = "mysql"
+  engine_version       = "8.0"
+  instance_class       = "db.t3.micro"
+  username             = "maher"
+  password             = var.db_instance_password
+  parameter_group_name = "default.mysql8.0"
+  skip_final_snapshot  = true
+  
+
+}
+
+# Elastic subnet group
+resource "aws_elasticache_subnet_group" "terra-ecache-subgrp" {
+
+name = "terra-ecache-subgrp"
+
+subnet_ids = [ aws_subnet.private["1b"].id ]
+
+tags = {
+
+Name = "Subnet group for ECACHE"
+
+}
+
+}
+
+# create Memcached ElastiCache cluster
+resource "aws_elasticache_cluster" "example" {
+  cluster_id           = "cluster-example"
+  engine               = "memcached"
+  node_type            = "cache.t2.micro"
+  num_cache_nodes      = 1
+  parameter_group_name = "default.memcached1.6"
+  port                 = 11211
+  security_group_ids = [aws_security_group.terra-backend-sg.id]
+  subnet_group_name = aws_elasticache_subnet_group.terra-ecache-subgrp.name
+
+}
+
+# creae message broker "ActiveMQ message"
+
+resource "aws_mq_broker" "example" {
+  broker_name = "example"
+  engine_type        = "ActiveMQ"
+  engine_version     = "5.17.6"
+  host_instance_type = "mq.t2.micro"
+  security_groups    = [aws_security_group.terra-backend-sg.id]
+  subnet_ids = [ aws_subnet.private["1b"].id]
+
+  user {
+    username = var.mq_broker_password["username"]
+    password = var.mq_broker_password["password"]
+  }
+}
+
