@@ -45,3 +45,23 @@ variable "allow_cidr_block" {
   default = "10.0.0.0/16"
   type = string
 }
+
+variable "public_external_port" {
+default = [0,22]
+type = list(number)
+}
+
+variable "public_internal_port" {
+default = [0,22]
+type = list(number)
+}
+
+variable "private_external_port" {
+default = [22]
+type = list(number)
+}
+
+variable "private_internal_port" {
+default = [22]
+type = list(number)
+}
